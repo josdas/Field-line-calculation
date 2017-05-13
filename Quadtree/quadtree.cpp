@@ -3,11 +3,11 @@
 #include <iostream>
 const int MAX_H = 16;
 
-Quadtree::node::node(node* left, node* right, Box limit, int h, NodeType full_empty) :
+Quadtree::node::node(node* left, node* right, Box limit, int height, NodeType full_empty) :
 	left(left),
 	right(right),
 	limit(limit),
-	h(h),
+	height(height),
 	type(full_empty),
 	charge(0) { }
 
@@ -27,20 +27,20 @@ float Quadtree::get_charge(node* v) {
 
 }
 
-Quadtree::node::node(node* left, node* right, Box limit, int h) :
+Quadtree::node::node(node* left, node* right, Box limit, int height) :
 	left(left),
 	right(right),
 	limit(limit),
-	h(h) {
+	height(height) {
 	type = static_cast<NodeType>(get_type(left) | get_type(right));
 	charge = get_charge(left) + get_charge(right);
 }
 
-Quadtree::node::node(Box limit, int h, NodeType full_empty, float charge) :
+Quadtree::node::node(Box limit, int height, NodeType full_empty, float charge) :
 	left(nullptr),
 	right(nullptr),
 	limit(limit),
-	h(h),
+	height(height),
 	type(full_empty),
 	charge(charge) { }
 
@@ -83,24 +83,24 @@ std::pair<Box, Box> divide_box(int h, Box limit) {
 	return std::make_pair(a, b);
 }
 
-Quadtree::node* Quadtree::dfs(Box limit, int h) {
+Quadtree::node* Quadtree::dfs(Box limit, int height) {
 	NodeType temp = test_for_in_out(limit);
 	if (temp == FULL_NODE) {
 		add_zone(limit);
 		float sum = get_sum_charge(limit);
 		return new node(
 			limit,
-			h,
+			height,
 			FULL_NODE,
 			sum
 		);
 	}
-	if (temp == EMPTY_NODE || h > MAX_H) {
+	if (temp == EMPTY_NODE || height > MAX_H) {
 		return nullptr;
 	}
-	auto boxs = divide_box(h, limit);
-	auto left = dfs(boxs.first, h + 1);
-	auto right = dfs(boxs.second, h + 1);
+	auto boxs = divide_box(height, limit);
+	auto left = dfs(boxs.first, height + 1);
+	auto right = dfs(boxs.second, height + 1);
 	if (get_type(left) == get_type(right)
 		&& get_type(left) == EMPTY_NODE) {
 		return nullptr;
@@ -109,22 +109,22 @@ Quadtree::node* Quadtree::dfs(Box limit, int h) {
 		left,
 		right,
 		limit,
-		h
+		height
 	);
 }
 
-Quadtree::node* Quadtree::get(Point t, node* cur, int h) const {
+Quadtree::node* Quadtree::get(Point t, node* cur, int height) const {
 	if (cur == nullptr) {
 		return nullptr;
 	}
 	if (cur->type != NO_EMPTY_NODE) {
 		return cur;
 	}
-	auto boxs = divide_box(h, cur->limit);
+	auto boxs = divide_box(height, cur->limit);
 	if (boxs.first.contains(t)) {
-		return get(t, cur->left, h + 1);
+		return get(t, cur->left, height + 1);
 	}
-	return get(t, cur->right, h + 1);
+	return get(t, cur->right, height + 1);
 }
 
 void Quadtree::clear_dfs(node* cur) {

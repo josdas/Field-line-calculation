@@ -10,14 +10,14 @@ enum NodeType {
 
 class Quadtree {
 	struct node {
-		node(node* left, node* right, Box limit, int h, NodeType full_empty);
-		node(node* left, node* right, Box limit, int h);
-		node(Box limit, int h, NodeType full_empty, float charge);
+		node(node* left, node* right, Box limit, int height, NodeType full_empty);
+		node(node* left, node* right, Box limit, int height);
+		node(Box limit, int height, NodeType full_empty, float charge);
 
 		node* left;
 		node* right;
 		Box limit;
-		int h;
+		int height;
 		NodeType type;
 		float charge;
 	};
@@ -30,8 +30,8 @@ class Quadtree {
 	NodeType test_for_in_out(Box limit);
 	void add_zone(Box limit);
 
-	node* dfs(Box limit, int h);
-	node* get(Point t, node* cur, int h) const;
+	node* dfs(Box limit, int height);
+	node* get(Point t, node* cur, int height) const;
 	void clear_dfs(node* cur);
 
 	static float get_charge(node* v);
