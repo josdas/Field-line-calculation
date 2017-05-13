@@ -1,4 +1,7 @@
 #include "geometry.h"
+#include <cassert>
+#include <algorithm>
+#include <map>
 
 const float eps = 1e-3f;
 
@@ -7,13 +10,14 @@ bool is_zero(float x) {
 }
 
 Point::Point(float _x, float _y, float _z): x(_x), y(_y), z(_z) { }
+
 Point::Point(): Point(0, 0, 0) { }
 
-float& Point::operator[](int t) {
+float& Point::operator[](size_t t) {
 	return data[t];
 }
 
-float Point::operator[](int t) const {
+float Point::operator[](size_t t) const {
 	return data[t];
 }
 
@@ -25,7 +29,8 @@ Point Point::operator/(float c) const {
 	return Point(x / c, y / c, z / c);
 }
 
-Point cross_product(Point a, Point b) { // (a2b3  -   a3b2,     a3b1   -   a1b3,     a1b2   -   a2b1)
+Point cross_product(Point a, Point b) { 
+	// (a2b3  -   a3b2,     a3b1   -   a1b3,     a1b2   -   a2b1)
 	return Point(
 		a.y * b.z - a.z * b.y,
 		a.z * b.x - a.x * b.z,
@@ -57,12 +62,12 @@ Triangle::iterator Triangle::end() {
 	return points + 3;
 }
 
-Point Triangle::operator[](int x) {
+Point Triangle::operator[](size_t x) {
 	assert(x < 3);
 	return points[x];
 }
 
-Interval GetInterval(Triangle triangle, Point axis) {
+Interval get_interval(Triangle triangle, Point axis) {
 	Interval result;
 
 	result.min = dot_product(axis, triangle.points[0]);
@@ -76,20 +81,20 @@ Interval GetInterval(Triangle triangle, Point axis) {
 	return result;
 }
 
-bool OverlapOnAxis(Triangle t1, Triangle t2, Point axis) {
-	Interval a = GetInterval(t1, axis);
-	Interval b = GetInterval(t2, axis);
+bool overlap_on_axis(Triangle t1, Triangle t2, Point axis) {
+	Interval a = get_interval(t1, axis);
+	Interval b = get_interval(t2, axis);
 	return ((b.min <= a.max) && (a.min <= b.max));
 }
 
 bool cross_triangle_triangle(Triangle t1, Triangle t2) {
-	Point t1_f0 = t1.b - t1.a; // Edge 0
-	Point t1_f1 = t1.c - t1.b; // Edge 1
-	Point t1_f2 = t1.a - t1.c; // Edge 2
+	Point t1_f0 = t1.b - t1.a; // Edges t1
+	Point t1_f1 = t1.c - t1.b;
+	Point t1_f2 = t1.a - t1.c;
 
-	Point t2_f0 = t2.b - t2.a; // Edge 0
-	Point t2_f1 = t2.c - t2.b; // Edge 1
-	Point t2_f2 = t2.a - t2.c; // Edge 2
+	Point t2_f0 = t2.b - t2.a; // Edges t2
+	Point t2_f1 = t2.c - t2.b;
+	Point t2_f2 = t2.a - t2.c;
 
 	Point axisToTest[] = {
 		// Triangle 1, Normal
@@ -112,18 +117,22 @@ bool cross_triangle_triangle(Triangle t1, Triangle t2) {
 	};
 
 	for (int i = 0; i < 11; ++i) {
-		if (!OverlapOnAxis(t1, t2, axisToTest[i])) {
+		if (!overlap_on_axis(t1, t2, axisToTest[i])) {
 			return false; // Seperating axis found
 		}
 	}
 	return true; // Seperating axis not found
 }
 
-bool box::contains(Point x) const {
+Box::Box(Point first, Point second) : 
+	first(first),
+	second(second) { }
+
+bool Box::contains(Point x) const {
 	return first <= x && x <= second;
 }
 
-std::vector<Point> box::get_points() const {
+std::vector<Point> Box::get_points() const {
 	std::vector<Point> temp;
 	for (int i = 0; i < 8; i++) {
 		Point p;
@@ -142,22 +151,35 @@ std::vector<Point> box::get_points() const {
 
 float tetrahedron_volume(Point a, Point b, Point c, Point d) {
 	b -= d , c -= d , a -= d;
-	return dot_product(a, cross_product(b, d)) / 6;
+	return dot_product(a, cross_product(b, c)) / 6;
 }
 
 float tetrahedron_volume(Point a, Triangle tr) {
 	return tetrahedron_volume(a, tr[0], tr[1], tr[2]);
 }
 
-object::iterator object::begin() {
+Object::Object(const std::vector<Point>& points, std::vector<std::vector<int>> connect) :
+	points(points) {
+	for(auto v : connect) {
+		polygones.push_back(Triangle(
+			points[v[0]],
+			points[v[1]],
+			points[v[2]]
+		));
+	}
+	init();
+}
+
+Object::iterator Object::begin() {
 	return polygones.begin();
 }
 
-object::iterator object::end() {
+Object::iterator Object::end() {
 	return polygones.end();
 }
 
-void object::init() { // calc volume and unique points
+void Object::init() { 
+	// calc volume and unique points
 	real_volume = 0;
 	for (Triangle v : polygones) {
 		real_volume += tetrahedron_volume(Point(), v);
@@ -170,11 +192,32 @@ void object::init() { // calc volume and unique points
 	points.resize(unique(points.begin(), points.end()) - points.begin());
 }
 
-object::object(const std::vector<Triangle>& trianguals): polygones(trianguals) {
+Object::Object(const std::vector<Triangle>& trianguals): polygones(trianguals) {
 	init();
 }
 
-object::object(box trianguals) {
+Point get_neighbor_point(Point p, Box trianguals, int q, int i) {
+	Point a = p;
+	if(i & (1 << q)) {
+		a[q] = trianguals.second[q];
+	}
+	else {
+		a[q] = trianguals.first[q];
+	}
+	return a;
+}
+
+int bit_count(int x) {
+	int r = 0;
+	while(x > 0) {
+		r += x & 1;
+		x >>= 1;
+	}
+	return r;
+}
+
+Object::Object(Box trianguals) {
+	Point mid = (trianguals.first + trianguals.second) / 2;
 	for (int i = 0; i < 8; i++) {
 		Point p;
 		for (int j = 0; j < 3; j++) {
@@ -186,17 +229,30 @@ object::object(box trianguals) {
 			}
 		}
 		for (int j = 0; j < 3; j++) {
-			Point a = p;
-			Point b = p;
-			a[j] = trianguals.first[j];
-			b[(j + 2) % 3] = trianguals.second[(j + 2) % 3];
-			polygones.push_back(Triangle(a, p, b));
+			int q = (j + 2) % 3;
+			if(	i == 0 
+				|| i == 7
+				|| ((i ^ (1 << j)) != 0 
+				&& (i ^ (1 << j)) != 7
+				&& (i ^ (1 << q)) != 0
+				&& (i ^ (1 << q)) != 7)) {
+				Point a = get_neighbor_point(p, trianguals, j, i);
+				Point b = get_neighbor_point(p, trianguals, q, i);
+				auto temp = tetrahedron_volume(mid, Triangle(a, b, p));
+				if (temp > 0) {
+					polygones.push_back(Triangle(a, b, p));
+				}
+				else {
+					polygones.push_back(Triangle(a, p, b));
+				}
+			}
 		}
 	}
 	init();
 }
 
-bool object::contains(Point p) { // calculate volume
+bool Object::contains(Point p) { 
+	// calculate volume
 	float temp = 0;
 	for (Triangle v : polygones) {
 		temp += abs(tetrahedron_volume(p, v));
@@ -204,9 +260,13 @@ bool object::contains(Point p) { // calculate volume
 	return is_zero(temp - real_volume);
 }
 
-int object::cross(box limit) { // 0 - empty, 1 - obj in limit, 2 - limit in obj, 3 - limit and obj have intersection
+int Object::cross(Box limit) { 
+	// 0 - empty
+	// 1 - limit in obj
+	// 2 - obj in limit
+	// 3 - limit and obj have intersection
 	std::vector<Point> limit_points = limit.get_points();
-	object limit_obj = limit;
+	Object limit_obj = limit;
 	bool in = true;
 	for (Point v : limit_points) {
 		if (!contains(v)) {

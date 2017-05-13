@@ -1,7 +1,5 @@
 #pragma once
 #include <vector>
-#include <algorithm>
-#include <cassert>
 
 bool is_zero(float x);
 
@@ -20,8 +18,8 @@ struct Point {
 	friend Point operator+(Point a, Point b);
 	friend Point operator-(Point a, Point b);
 
-	float& operator[](int t);
-	float operator[](int t) const;
+	float& operator[](size_t t);
+	float operator[](size_t t) const;
 
 	friend bool operator<(Point a, Point b);
 	friend bool operator==(Point a, Point b);
@@ -32,9 +30,7 @@ struct Point {
 };
 
 Point cross_product(Point a, Point b);
-
 float dot_product(Point a, Point b);
-
 
 struct Triangle {
 	typedef Point* iterator;
@@ -51,7 +47,7 @@ struct Triangle {
 
 	iterator begin();
 	iterator end();
-	Point operator[](int x);
+	Point operator[](size_t x);
 };
 
 struct Interval {
@@ -59,13 +55,23 @@ struct Interval {
 	float max;
 };
 
-Interval GetInterval(Triangle triangle, Point axis);
-bool OverlapOnAxis(Triangle t1, Triangle t2, Point axis);
+Interval get_interval(Triangle triangle, Point axis);
+bool overlap_on_axis(Triangle t1, Triangle t2, Point axis);
 bool cross_triangle_triangle(Triangle t1, Triangle t2);
 
-struct box {
-	Point first, second;
+struct Box {
+	union {
+		struct {
+			Point first, second;
+		};
+		Point data[2];
+	};
 
+	Box(Point first, Point second);
+	Box(Box const& b) {
+		data[0] = b.data[0];
+		data[1] = b.data[1];
+	}
 	bool contains(Point x) const;
 	std::vector<Point> get_points() const;
 };
@@ -73,7 +79,7 @@ struct box {
 float tetrahedron_volume(Point a, Point b, Point c, Point d);
 float tetrahedron_volume(Point a, Triangle tr);
 
-class object {
+class Object {
 	std::vector<Triangle> polygones;
 	std::vector<Point> points;
 	float real_volume;
@@ -84,9 +90,10 @@ public:
 	iterator begin();
 	iterator end();
 
-	object(const std::vector<Triangle>& trianguals);
-	object(box trianguals);
+	Object(const std::vector<Point>& points, std::vector<std::vector<int> > connect);
+	Object(const std::vector<Triangle>& trianguals);
+	Object(Box trianguals);
 
 	bool contains(Point p);
-	int cross(box limit);
+	int cross(Box limit);
 };
