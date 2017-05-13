@@ -29,7 +29,7 @@ Point Point::operator/(float c) const {
 	return Point(x / c, y / c, z / c);
 }
 
-Point cross_product(Point a, Point b) { 
+Point cross_product(Point a, Point b) {
 	// (a2b3  -   a3b2,     a3b1   -   a1b3,     a1b2   -   a2b1)
 	return Point(
 		a.y * b.z - a.z * b.y,
@@ -124,13 +124,13 @@ bool cross_triangle_triangle(Triangle t1, Triangle t2) {
 	return true; // Seperating axis not found
 }
 
-Box::Box(Point first, Point second) : 
+Box::Box(Point first, Point second) :
 	first(first),
 	second(second) { }
 
 bool Box::contains(Point x) const {
-	for(int i = 0; i < 3; i++) {
-		if(!(first[i] <= x[i] && x[i] <= second[i])) {
+	for (int i = 0; i < 3; i++) {
+		if (!(first[i] <= x[i] && x[i] <= second[i])) {
 			return false;
 		}
 	}
@@ -163,9 +163,9 @@ float tetrahedron_volume(Point a, Triangle tr) {
 	return tetrahedron_volume(a, tr[0], tr[1], tr[2]);
 }
 
-Object::Object(const std::vector<Point>& points, std::vector<std::vector<int>> connect) :
+Object::Object(const std::vector<Point>& points, std::vector<std::vector<int> > connect) :
 	points(points) {
-	for(auto v : connect) {
+	for (auto v : connect) {
 		polygones.push_back(Triangle(
 			points[v[0]],
 			points[v[1]],
@@ -183,7 +183,7 @@ Object::iterator Object::end() {
 	return polygones.end();
 }
 
-void Object::init() { 
+void Object::init() {
 	// calc volume and unique points
 	real_volume = 0;
 	for (Triangle v : polygones) {
@@ -203,7 +203,7 @@ Object::Object(const std::vector<Triangle>& trianguals): polygones(trianguals) {
 
 Point get_neighbor_point(Point p, Box trianguals, int q, int i) {
 	Point a = p;
-	if(i & (1 << q)) {
+	if (i & (1 << q)) {
 		a[q] = trianguals.second[q];
 	}
 	else {
@@ -214,7 +214,7 @@ Point get_neighbor_point(Point p, Box trianguals, int q, int i) {
 
 int bit_count(int x) {
 	int r = 0;
-	while(x > 0) {
+	while (x > 0) {
 		r += x & 1;
 		x >>= 1;
 	}
@@ -235,12 +235,12 @@ Object::Object(Box rectangle) {
 		}
 		for (int j = 0; j < 3; j++) {
 			int q = (j + 2) % 3;
-			if(	i == 0 
+			if (i == 0
 				|| i == 7
-				|| ((i ^ (1 << j)) != 0 
-				&& (i ^ (1 << j)) != 7
-				&& (i ^ (1 << q)) != 0
-				&& (i ^ (1 << q)) != 7)) {
+				|| ((i ^ (1 << j)) != 0
+					&& (i ^ (1 << j)) != 7
+					&& (i ^ (1 << q)) != 0
+					&& (i ^ (1 << q)) != 7)) {
 				Point a = get_neighbor_point(p, rectangle, j, i);
 				Point b = get_neighbor_point(p, rectangle, q, i);
 				auto temp = tetrahedron_volume(mid, Triangle(a, b, p));
@@ -256,7 +256,7 @@ Object::Object(Box rectangle) {
 	init();
 }
 
-bool Object::contains(Point p) { 
+bool Object::contains(Point p) {
 	// calculate volume
 	float temp = 0;
 	for (Triangle v : polygones) {
@@ -294,6 +294,26 @@ bool Object::contains(Point p) {
 		}
 	}
 	return EMPTY;
+}
+
+PObject::PObject(const std::vector<Point>& points, std::vector<std::vector<int>> connect, float charge) :
+	Object(points, connect),
+	charge(charge) { }
+
+PObject::PObject(const std::vector<Triangle>& trianguals, float charge) :
+	Object(trianguals),
+	charge(charge) { }
+
+PObject::PObject(Box trianguals, float charge) :
+	Object(trianguals),
+	charge(charge) { }
+
+PObject::PObject(Object const& object, float charge) :
+	Object(object),
+	charge(charge) { }
+
+float PObject::get_charge() const {
+	return charge;
 }
 
 Point operator+(Point a, Point b) {
