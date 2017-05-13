@@ -79,7 +79,7 @@ struct Box {
 float tetrahedron_volume(Point a, Point b, Point c, Point d);
 float tetrahedron_volume(Point a, Triangle tr);
 
-enum ÑrossType {
+enum CrossType {
 	LIMIT_IN_OBJ,
 	OBJ_IN_LIMIT,
 	INTERSECTION,
@@ -102,7 +102,7 @@ public:
 	Object(Box trianguals);
 
 	bool contains(Point p);
-	ÑrossType cross(Box limit);
+	CrossType cross(Box limit);
 };
 
 class PObject : public Object{

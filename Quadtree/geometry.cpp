@@ -265,7 +265,7 @@ bool Object::contains(Point p) {
 	return is_zero(temp - real_volume);
 }
 
-ÑrossType Object::cross(Box limit) {
+CrossType Object::cross(Box limit) {
 	std::vector<Point> limit_points = limit.get_points();
 	Object limit_obj = limit;
 	bool in = true;
