@@ -216,16 +216,16 @@ int bit_count(int x) {
 	return r;
 }
 
-Object::Object(Box trianguals) {
-	Point mid = (trianguals.first + trianguals.second) / 2;
+Object::Object(Box rectangle) {
+	Point mid = (rectangle.first + rectangle.second) / 2;
 	for (int i = 0; i < 8; i++) {
 		Point p;
 		for (int j = 0; j < 3; j++) {
 			if (i & (1 << j)) {
-				p[j] = trianguals.first[j];
+				p[j] = rectangle.first[j];
 			}
 			else {
-				p[j] = trianguals.second[j];
+				p[j] = rectangle.second[j];
 			}
 		}
 		for (int j = 0; j < 3; j++) {
@@ -236,8 +236,8 @@ Object::Object(Box trianguals) {
 				&& (i ^ (1 << j)) != 7
 				&& (i ^ (1 << q)) != 0
 				&& (i ^ (1 << q)) != 7)) {
-				Point a = get_neighbor_point(p, trianguals, j, i);
-				Point b = get_neighbor_point(p, trianguals, q, i);
+				Point a = get_neighbor_point(p, rectangle, j, i);
+				Point b = get_neighbor_point(p, rectangle, q, i);
 				auto temp = tetrahedron_volume(mid, Triangle(a, b, p));
 				if (temp > 0) {
 					polygones.push_back(Triangle(a, b, p));
@@ -260,11 +260,7 @@ bool Object::contains(Point p) {
 	return is_zero(temp - real_volume);
 }
 
-int Object::cross(Box limit) { 
-	// 0 - empty
-	// 1 - limit in obj
-	// 2 - obj in limit
-	// 3 - limit and obj have intersection
+ÑrossType Object::cross(Box limit) {
 	std::vector<Point> limit_points = limit.get_points();
 	Object limit_obj = limit;
 	bool in = true;
@@ -274,7 +270,7 @@ int Object::cross(Box limit) {
 		}
 	}
 	if (in) {
-		return 1;
+		return LIMIT_IN_OBJ;
 	}
 	bool out = true;
 	for (Point tpoint : points) {
@@ -283,16 +279,16 @@ int Object::cross(Box limit) {
 		}
 	}
 	if (out) {
-		return 2;
+		return OBJ_IN_LIMIT;
 	}
 	for (Triangle v : limit_obj) {
 		for (Triangle u : polygones) {
 			if (cross_triangle_triangle(v, u)) {
-				return 3;
+				return INTERSECTION;
 			}
 		}
 	}
-	return 0;
+	return EMPTY;
 }
 
 Point operator+(Point a, Point b) {

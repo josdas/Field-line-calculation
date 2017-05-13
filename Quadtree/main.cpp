@@ -26,15 +26,14 @@ int main() {
 		}
 	}
 	Object object(points, connections);
-	Box limit(Point(-1, -1, -1), Point(10, 10, 10));
+	Box limit(Point(), Point(5, 5, 5));
 	objects.push_back(object);
 	Quadtree quadtree(objects, limit);
 	auto zone = quadtree.get_zones();
 	cout << zone.size() << '\n';
 	for(auto v : zone) {
 		auto s = (v.second + v.first) / 2;
-		auto d = v.first - v.second;
-		float r = min(min(abs(d.x), abs(d.y)), abs(d.x));
-		cout << s.x << ' ' << s.y << ' ' << s.z << ' ' << r << '\n';
+		auto d = (v.second - v.first) / 2;
+		cout << s.x << ' ' << s.y << ' ' << s.z << ' ' << d.x << ' '  << d.y << ' ' << d.z << '\n';
 	}
 }

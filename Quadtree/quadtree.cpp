@@ -1,41 +1,50 @@
 #include "quadtree.h"
 #include <cassert>
+#include <iostream>
 const int MAX_H = 11;
 
-Quadtree::node::node(node* left, node* right, Box limit, int h, int full_empty) :
+Quadtree::node::node(node* left, node* right, Box limit, int h, NodeType full_empty) :
 	left(left),
 	right(right),
 	limit(limit),
 	h(h),
-	full_empty(full_empty) { }
+	type(full_empty) { }
+
+
+NodeType Quadtree::get_type(node* v) {
+	if (v == nullptr) {
+		return EMPTY_NODE;
+	}
+	return v->type;
+}
 
 Quadtree::node::node(node* left, node* right, Box limit, int h) :
 	left(left),
 	right(right),
 	limit(limit),
 	h(h) {
-	full_empty = left->full_empty && right->full_empty;
+	type = static_cast<NodeType>(get_type(left) | get_type(right));
 }
 
-Quadtree::node::node(Box limit, int h, int full_empty) :
+Quadtree::node::node(Box limit, int h, NodeType full_empty) :
 	left(nullptr),
 	right(nullptr),
 	limit(limit), 
 	h(h),
-	full_empty(full_empty) { }
+	type(full_empty) { }
 
-int Quadtree::test_for_in_out(Box limit) {
+NodeType Quadtree::test_for_in_out(Box limit) {
 	bool ok[4] = {};
 	for (auto obj : objects) {
 		ok[obj.cross(limit)] = true;
 	}
-	if (ok[1]) {
-		return 1;
+	if (ok[LIMIT_IN_OBJ]) {
+		return FULL_NODE;
 	}
-	if (ok[2] | ok[3]) {
-		return 2;
+	if (ok[OBJ_IN_LIMIT] | ok[INTERSECTION]) {
+		return NO_EMPTY_NODE;
 	}
-	return 0;
+	return EMPTY_NODE;
 }
 
 void Quadtree::add_zone(Box limit) {
@@ -43,21 +52,17 @@ void Quadtree::add_zone(Box limit) {
 }
 
 Quadtree::node* Quadtree::dfs(Box limit, int h) {
-	int temp = test_for_in_out(limit);
-	if (temp == 1) {
+	NodeType temp = test_for_in_out(limit);
+	if (temp == FULL_NODE) {
 		add_zone(limit);
 		return new node(
 			limit,
 			h,
-			1
+			FULL_NODE
 		);
 	}
-	if (temp == 0 || h > MAX_H) {
-		return new node(
-			limit,
-			h,
-			2
-		);
+	if (temp == EMPTY_NODE || h > MAX_H) {
+		return nullptr;
 	}
 	Point s = (limit.first + limit.second) / 2;
 	Box a = limit;
@@ -65,22 +70,30 @@ Quadtree::node* Quadtree::dfs(Box limit, int h) {
 	int cur_d = h % 3;
 	a.first[cur_d] = s[cur_d];
 	b.second[cur_d] = s[cur_d];
-	auto cur_node = new node(
-		dfs(a, h + 1),
-		dfs(b, h + 1),
+	
+	auto left = dfs(a, h + 1);
+	auto right = dfs(b, h + 1);
+	if(get_type(left) == get_type(right) 
+	&& get_type(left) == EMPTY_NODE) {
+		return nullptr;
+	}
+	return new node(
+		left,
+		right,
 		limit,
 		h
 	);
-	return cur_node;
 }
 
-int Quadtree::get(Point t, node* cur) {
-	assert(cur != nullptr);
-	if (!cur->limit.contains(t)) {
-		return 0;
+bool Quadtree::get(Point t, node* cur) {
+	if(cur == nullptr) {
+		return true;
 	}
-	if (cur->full_empty > 0) {
-		return cur->full_empty;
+	if (!cur->limit.contains(t)) {
+		return false;
+	}
+	if (cur->type != NO_EMPTY_NODE) {
+		return cur->type == EMPTY;
 	}
 	return get(t, cur->left) | get(t, cur->right);
 }
@@ -92,6 +105,7 @@ void Quadtree::clear_dfs(node* cur) {
 		delete cur;
 	}
 }
+
 
 void Quadtree::clear() {
 	clear_dfs(root);
@@ -107,7 +121,7 @@ Quadtree::~Quadtree() {
 }
 
 bool Quadtree::is_empty_point(Point p) {
-	return get(p, root) == 2;
+	return get(p, root);
 }
 
 std::vector<Box> Quadtree::get_zones() const {

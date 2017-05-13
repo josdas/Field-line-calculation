@@ -79,6 +79,13 @@ struct Box {
 float tetrahedron_volume(Point a, Point b, Point c, Point d);
 float tetrahedron_volume(Point a, Triangle tr);
 
+enum ÑrossType {
+	LIMIT_IN_OBJ,
+	OBJ_IN_LIMIT,
+	INTERSECTION,
+	EMPTY
+};
+
 class Object {
 	std::vector<Triangle> polygones;
 	std::vector<Point> points;
@@ -95,5 +102,5 @@ public:
 	Object(Box trianguals);
 
 	bool contains(Point p);
-	int cross(Box limit);
+	ÑrossType cross(Box limit);
 };
