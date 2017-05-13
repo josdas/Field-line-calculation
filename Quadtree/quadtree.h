@@ -28,7 +28,7 @@ class Quadtree {
 	void add_zone(Box limit);
 
 	node* dfs(Box limit, int h);
-	bool get(Point t, node* cur);
+	bool get(Point t, node* cur, int h);
 	void clear_dfs(node* cur);
 
 	static NodeType get_type(node* v);

@@ -26,7 +26,8 @@ int main() {
 		}
 	}
 	Object object(points, connections);
-	Box limit(Point(), Point(5, 5, 5));
+	int MAX = 10;
+	Box limit(Point(-MAX, -MAX, -MAX), Point(MAX, MAX, MAX));
 	objects.push_back(object);
 	Quadtree quadtree(objects, limit);
 	auto zone = quadtree.get_zones();
@@ -35,5 +36,15 @@ int main() {
 		auto s = (v.second + v.first) / 2;
 		auto d = (v.second - v.first) / 2;
 		cout << s.x << ' ' << s.y << ' ' << s.z << ' ' << d.x << ' '  << d.y << ' ' << d.z << '\n';
+	}
+	int T = MAX * MAX*  MAX;
+	cout << T << '\n';
+	for(int i = 0; i < MAX; i++) {
+		for (int j = 0; j < MAX; j++) {
+			for (int k = 0; k < MAX; k++) {
+				int ok = !quadtree.is_empty_point(Point(i, j, k));
+				cout << i << ' ' << j << ' ' << k << ' ' << ok << '\n';
+			}
+		}
 	}
 }

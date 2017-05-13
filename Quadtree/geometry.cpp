@@ -129,7 +129,12 @@ Box::Box(Point first, Point second) :
 	second(second) { }
 
 bool Box::contains(Point x) const {
-	return first <= x && x <= second;
+	for(int i = 0; i < 3; i++) {
+		if(!(first[i] <= x[i] && x[i] <= second[i])) {
+			return false;
+		}
+	}
+	return true;
 }
 
 std::vector<Point> Box::get_points() const {
