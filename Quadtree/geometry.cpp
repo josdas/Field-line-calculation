@@ -29,6 +29,10 @@ Point Point::operator/(float c) const {
 	return Point(x / c, y / c, z / c);
 }
 
+Point Point::operator*(float c) const {
+	return Point(x * c, y * c, z * c);
+}
+
 Point cross_product(Point a, Point b) {
 	// (a2b3  -   a3b2,     a3b1   -   a1b3,     a1b2   -   a2b1)
 	return Point(
@@ -293,7 +297,7 @@ CrossType Object::cross(Box limit) {
 			}
 		}
 	}
-	return EMPTY;
+	return EMPTY_INTERSECTION;
 }
 
 PObject::PObject(const std::vector<Point>& points, std::vector<std::vector<int>> connect, float charge) :

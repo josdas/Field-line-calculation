@@ -26,6 +26,7 @@ struct Point {
 	friend bool operator<=(Point a, Point b);
 
 	Point operator/(float c) const;
+	Point operator*(float c) const;
 	Point operator-=(Point b);
 };
 
@@ -83,7 +84,7 @@ enum CrossType {
 	LIMIT_IN_OBJ,
 	OBJ_IN_LIMIT,
 	INTERSECTION,
-	EMPTY
+	EMPTY_INTERSECTION
 };
 
 class Object {

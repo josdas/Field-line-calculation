@@ -4,7 +4,8 @@
 #include <cassert>
 #include <algorithm>
 #include <vector>
-#include "quadtree.h"
+#include "physical_quadtree.h"
+#include "geometry.h"
 
 using namespace std;
 
@@ -29,7 +30,7 @@ int main() {
 	int MAX = 10;
 	Box limit(Point(-MAX, -MAX, -MAX), Point(MAX, MAX, MAX));
 	objects.push_back(PObject(object, 5));
-	Quadtree quadtree(objects, limit);
+	Physical_quadtree quadtree(objects, limit);
 	auto zone = quadtree.get_zones();
 	cout << zone.size() << '\n';
 	for (auto v : zone) {

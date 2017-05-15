@@ -62,7 +62,7 @@ float Quadtree::get_sum_charge(Box limit) {
 	float result = 0;
 	for (auto obj : objects) {
 		auto t = obj.cross(limit);
-		if (t != EMPTY) {
+		if (t != EMPTY_INTERSECTION) {
 			result += obj.get_charge();
 		}
 	}
@@ -149,7 +149,7 @@ Quadtree::~Quadtree() {
 }
 
 bool Quadtree::is_empty_point(Point p) const {
-	return get_type(get(p, root, 0)) == EMPTY;
+	return get_type(get(p, root, 0)) == EMPTY_INTERSECTION;
 }
 
 float Quadtree::get_charge(Point p) const {
