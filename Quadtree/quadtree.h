@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include "geometry.h"
+#include "physical_geometry.h"
 
 enum NodeType {
 	EMPTY_NODE = 1,

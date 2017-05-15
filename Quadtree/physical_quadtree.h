@@ -2,6 +2,7 @@
 #include <vector>
 #include "geometry.h"
 #include "quadtree.h"
+#include "physical_geometry.h"
 
 class Phy_node {
 	Point charge_point;
@@ -18,7 +19,7 @@ public:
 
 class Physical_quadtree : public Quadtree<Phy_node> {
 public:
-	Physical_quadtree(std::vector<PObject> const& objects_, Box const& limit);
+	Physical_quadtree(std::vector<PObject> const& objects, Box const& limit);
 
 	float get_charge(Point point) const;
 };

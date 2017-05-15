@@ -1,4 +1,5 @@
 #include "physical_quadtree.h"
+#include "physical_geometry.h"
 
 Phy_node::Phy_node() :
 	charge_point(),
@@ -34,8 +35,8 @@ Phy_node Phy_node::merge(Phy_node const& a, Phy_node const& b) {
 	);
 }
 
-Physical_quadtree::Physical_quadtree(std::vector<PObject> const& objects_, const Box& limit)
-	: Quadtree<Phy_node>(objects_, limit) { }
+Physical_quadtree::Physical_quadtree(std::vector<PObject> const& objects, const Box& limit)
+	: Quadtree<Phy_node>(objects, limit) { }
 
 float Physical_quadtree::get_charge(Point point) const {
 	return get_data(get(point, root, 0)).get_charge();
