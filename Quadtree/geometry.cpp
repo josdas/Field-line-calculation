@@ -3,7 +3,6 @@
 #include <algorithm>
 #include <map>
 
-const float eps = 1e-3f;
 
 bool is_zero(float x) {
 	return abs(x) < eps;
@@ -323,4 +322,91 @@ bool operator==(Point a, Point b) {
 
 bool operator<=(Point a, Point b) {
 	return a < b || a == b;
+}
+
+float Point::length() const {
+	return sqrt(x * x + y * y + z * z);
+}
+
+bool Triangle:: contains(const Point &p) const {
+	float angle = 0;
+	for (int i = 0; i < 3; i++) {
+		Point a = points[i];
+		Point b = points[(i + 1) % 3];
+		Point ta = a - p, tb = b - p;
+		angle += std::acos(dot_product(ta, tb) / (ta.length() * tb.length()));
+	}
+	if (abs(angle - PI) < eps) {
+		return 1;
+	}
+	return 0;
+}
+
+bool seg_cross(Point a, Point b, Point c, Point d) {
+	if (!is_zero(tetrahedron_volume(a, b, c, d))) {
+		return 0;
+	}
+	float u = (d.x - b.x) * (d.y - c.y) - (d.x - c.x) * (d.y - b.y);
+	u /= (a.x - b.x) * (d.y - c.y) - (d.x - c.x - a.y - b.y);
+
+	if (!(0 + eps <= u && u + eps <= 1)) {
+		return 0;
+	}
+	
+	float v = (a.x - b.x) * (d.y - b.y) - (d.x - b.x) * (a.y - b.y);
+	v /= (a.x - b.x) * (d.y - c.y) - (d.x - c.x) * (a.y - b.y);
+
+	if (!(0 + eps <= v && v + eps <= 1)) {
+		return 0;
+	}
+	return 1;
+}
+
+Point get_seg_cross(Point a, Point b, Point c, Point d) {
+	float u = (d.x - b.x) * (d.y - c.y) - (d.x - c.x) * (d.y - b.y);
+	u /= (a.x - b.x) * (d.y - c.y) - (d.x - c.x - a.y - b.y);
+
+	float v = (a.x - b.x) * (d.y - b.y) - (d.x - b.x) * (a.y - b.y);
+	v /= (a.x - b.x) * (d.y - c.y) - (d.x - c.x) * (a.y - b.y);
+
+	return Point(u * (a.x - b.x) + b.x, u * (a.y - b.y) + b.y, u * (a.z - b.z) + b.z);
+}
+
+float tetrahedron::cross_voluume(const tetrahedron &other) {
+	using std::vector;
+	vector<Point> dots;
+	for (auto t : other.points) {
+		if (contains(t)) {
+			dots.push_back(t);
+		}
+	}
+	for (int i = 0; i < 4; i++) {
+		Point a = points[i];
+		for (int j = i + 1; j < 4; j++) {
+			Point b = points[j];
+			for (int ii = 0; ii < 4; ii++) {
+				Point c = other.points[ii];
+				for (int jj = ii + 1; jj < 4; jj++) {
+					Point d = other.points[jj];
+					if (seg_cross(a, b, c, d)) {
+						dots.push_back(get_seg_cross(a, b, c, d));
+					}
+				}
+			}
+		}
+	}
+	for (auto tr : polygones) {
+		Plane pl(tr);
+		for (int ii = 0; ii < 4; ii++) {
+			Point c = other.points[ii];
+			for (int jj = ii + 1; jj < 4; jj++) {
+				Point d = other.points[jj];
+				if (pl.cross_seg(c, d) && tr.contains(pl.get_cross_seg(c, d))) {
+					dots.push_back(pl.get_cross_seg(c, d));
+				}
+			}
+		}
+	}
+	sort(dots.begin(), dots.end());
+	dots.resize(unique(dots.begin(), dots.end()) - dots.begin());
 }
