@@ -12,7 +12,7 @@ enum NodeType {
 //template<class T>
 //class Data_example<T> {
 //public:
-//	T get_value(std::vector<PObject const*>);
+//	T get_value(std::vector<PObject const*>, Box);
 //	T merge(T const& a, T const& b);
 //};
 
